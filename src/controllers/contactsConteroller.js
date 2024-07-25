@@ -8,6 +8,7 @@ const getAllContacts = async (req, res) => {
       message: 'Successfully found contacts!',
       data: contacts
     });
+  // eslint-disable-next-line no-unused-vars
   } catch (error) {
     res.status(500).json({ message: 'Internal server error' });
   }
@@ -24,6 +25,7 @@ const getContact = async (req, res) => {
       message: `Successfully found contact with id ${req.params.contactId}!`,
       data: contact
     });
+  // eslint-disable-next-line no-unused-vars
   } catch (error) {
     res.status(500).json({ message: 'Internal server error' });
   }
