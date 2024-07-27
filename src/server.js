@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const pino = require('pino-http')();
 
-const { getAllContacts, getContact } = require('./controllers/contactsConteroller');
+const { getAllContacts, getContact } = require('./controllers/contactsController');
 
 const setupServer = () => {
   const app = express();
