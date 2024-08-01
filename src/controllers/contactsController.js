@@ -1,34 +1,54 @@
-const { getContacts, getContactById } = require('../services/contacts');
+const createError = require('http-errors');
+const { getContacts, getContactById, createContact: createContactService, updateContactById, deleteContactById } = require('../services/contacts');
 
 const getAllContacts = async (req, res) => {
-  try {
-    const contacts = await getContacts();
-    res.status(200).json({
-      status: 200,
-      message: 'Successfully found contacts!',
-      data: contacts
-    });
-  // eslint-disable-next-line no-unused-vars
-  } catch (error) {
-    res.status(500).json({ message: 'Internal server error' });
-  }
+  const contacts = await getContacts();
+  res.status(200).json({
+    status: 200,
+    message: 'Successfully found contacts!',
+    data: contacts
+  });
 };
 
 const getContact = async (req, res) => {
-  try {
-    const contact = await getContactById(req.params.contactId);
-    if (!contact) {
-      return res.status(404).json({ message: 'Contact not found' });
-    }
-    res.status(200).json({
-      status: 200,
-      message: `Successfully found contact with id ${req.params.contactId}!`,
-      data: contact
-    });
-  // eslint-disable-next-line no-unused-vars
-  } catch (error) {
-    res.status(500).json({ message: 'Internal server error' });
+  const contact = await getContactById(req.params.contactId);
+  if (!contact) {
+    throw createError(404, 'Contact not found');
   }
+  res.status(200).json({
+    status: 200,
+    message: `Successfully found contact with id ${req.params.contactId}!`,
+    data: contact
+  });
 };
 
-module.exports = { getAllContacts, getContact };
+const createContact = async (req, res) => {
+  const newContact = await createContactService(req.body);
+  res.status(201).json({
+    status: 201,
+    message: 'Successfully created a contact!',
+    data: newContact
+  });
+};
+
+const updateContact = async (req, res) => {
+  const updatedContact = await updateContactById(req.params.contactId, req.body);
+  if (!updatedContact) {
+    throw createError(404, 'Contact not found');
+  }
+  res.status(200).json({
+    status: 200,
+    message: 'Successfully patched a contact!',
+    data: updatedContact
+  });
+};
+
+const deleteContact = async (req, res) => {
+  const deletedContact = await deleteContactById(req.params.contactId);
+  if (!deletedContact) {
+    throw createError(404, 'Contact not found');
+  }
+  res.status(204).send();
+};
+
+module.exports = { getAllContacts, getContact, createContact, updateContact, deleteContact };
