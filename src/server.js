@@ -12,7 +12,7 @@ const setupServer = () => {
   app.use(pino);
   app.use(express.json());
 
-  app.use('/api', contactsRouter);
+  app.use(contactsRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
