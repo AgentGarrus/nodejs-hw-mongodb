@@ -2,7 +2,7 @@ const express = require('express');
 const { getAllContacts, getContact, createContact, updateContact, deleteContact } = require('../controllers/contactsController');
 const validateBody = require('../middlewares/validateBody');
 const isValidId = require('../middlewares/isValidId');
-const { contactSchema } = require('../validators/contactValidator');
+const { contactSchema } = require('../validators/contactValidators');
 const ctrlWrapper = require('../utils/ctrlWrapper');
 
 const router = express.Router();
