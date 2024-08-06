@@ -1,7 +1,24 @@
 const Contact = require('../models/contact');
 
-const getContacts = async () => {
-  return await Contact.find();
+const getContacts = async (page, perPage, sortBy, sortOrder) => {
+  const skip = (page - 1) * perPage;
+  const contacts = await Contact.find()
+    .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
+    .skip(skip)
+    .limit(Number(perPage));
+  
+  const totalItems = await Contact.countDocuments();
+  const totalPages = Math.ceil(totalItems / perPage);
+
+  return {
+    data: contacts,
+    page: Number(page),
+    perPage: Number(perPage),
+    totalItems,
+    totalPages,
+    hasPreviousPage: page > 1,
+    hasNextPage: page < totalPages
+  };
 };
 
 const getContactById = async (id) => {

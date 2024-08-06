@@ -3,7 +3,8 @@ const { getContacts, getContactById, createContact: createContactService, update
 
 const getAllContacts = async (req, res, next) => {
   try {
-    const contacts = await getContacts();
+    const { page = 1, perPage = 10, sortBy = 'name', sortOrder = 'asc' } = req.query;
+    const contacts = await getContacts(page, perPage, sortBy, sortOrder);
     res.status(200).json({
       status: 200,
       message: 'Successfully found contacts!',
