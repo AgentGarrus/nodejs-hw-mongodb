@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const pino = require('pino-http')();
 const contactsRouter = require('./routers/contacts');
-const errorHandler = require('./middlewares/errorHandler.js');
+const errorHandler = require('./middlewares/errorHandler');
 const notFoundHandler = require('./middlewares/notFoundHandler');
 
 const setupServer = () => {
