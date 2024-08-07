@@ -2,8 +2,11 @@ const Contact = require('../models/contact');
 
 const getContacts = async (page, perPage, sortBy, sortOrder) => {
   const skip = (page - 1) * perPage;
+  const sort = {};
+  sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
+
   const contacts = await Contact.find()
-    .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
+    .sort(sort)
     .skip(skip)
     .limit(Number(perPage));
   
