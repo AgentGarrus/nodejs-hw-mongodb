@@ -1,31 +1,30 @@
+const Joi = require('joi');
 const createError = require('http-errors');
 
 const validateBody = (schema) => {
   return (req, res, next) => {
-    const body = req.body;
-    for (const key in schema) {
-      if (schema[key] && !schema[key](body[key])) {
-        return next(createError(400, `Invalid value for ${key}`));
-      }
+    const { error } = schema.validate(req.body);
+    if (error) {
+      return next(createError(400, error.details[0].message));
     }
     next();
   };
 };
 
-const createContactSchema = {
-  name: (value) => typeof value === 'string' && value.length >= 3 && value.length <= 20,
-  phoneNumber: (value) => typeof value === 'string' && value.length >= 3 && value.length <= 20,
-  email: (value) => typeof value === 'string' && value.includes('@'),
-  isFavourite: (value) => typeof value === 'boolean',
-  contactType: (value) => ['work', 'home', 'personal'].includes(value),
-};
+const createContactSchema = Joi.object({
+  name: Joi.string().min(3).max(20).required(),
+  phoneNumber: Joi.string().min(3).max(20).required(),
+  email: Joi.string().email().optional(),
+  isFavourite: Joi.boolean().optional(),
+  contactType: Joi.string().valid('work', 'home', 'personal').required(),
+});
 
-const updateContactSchema = {
-  name: (value) => value === undefined || (typeof value === 'string' && value.length >= 3 && value.length <= 20),
-  phoneNumber: (value) => value === undefined || (typeof value === 'string' && value.length >= 3 && value.length <= 20),
-  email: (value) => value === undefined || (typeof value === 'string' && value.includes('@')),
-  isFavourite: (value) => value === undefined || typeof value === 'boolean',
-  contactType: (value) => value === undefined || ['work', 'home', 'personal'].includes(value),
-};
+const updateContactSchema = Joi.object({
+  name: Joi.string().min(3).max(20).optional(),
+  phoneNumber: Joi.string().min(3).max(20).optional(),
+  email: Joi.string().email().optional(),
+  isFavourite: Joi.boolean().optional(),
+  contactType: Joi.string().valid('work', 'home', 'personal').optional(),
+});
 
 module.exports = { validateBody, createContactSchema, updateContactSchema };
