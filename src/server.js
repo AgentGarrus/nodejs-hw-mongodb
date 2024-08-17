@@ -5,6 +5,7 @@ const contactsRouter = require('./routers/contacts');
 const authRouter = require('./routers/auth');
 const errorHandler = require('./middlewares/errorHandler');
 const notFoundHandler = require('./middlewares/notFoundHandler');
+const authenticate = require('./middlewares/authenticate');
 
 const setupServer = () => {
   const app = express();
@@ -13,9 +14,9 @@ const setupServer = () => {
   app.use(pino);
   app.use(express.json());
 
-  app.use('/', contactsRouter);
-  app.use('/', authRouter);
-
+  app.use('/auth', authRouter);
+  app.use('/contacts', authenticate, contactsRouter);
+  
   app.use(notFoundHandler);
   app.use(errorHandler);
 
