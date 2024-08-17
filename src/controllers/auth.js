@@ -113,10 +113,7 @@ const logout = async (req, res, next) => {
 
   res.clearCookie('refreshToken');
 
-  res.status(200).json({
-    status: 200,
-    message: 'Successfully logged out!',
-  });
+  res.status(204).send();
 };
 
 module.exports = { register, login, refreshSession, logout };
