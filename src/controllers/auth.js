@@ -46,7 +46,7 @@ const login = async (req, res, next) => {
     const refreshToken = jwt.sign({ id: user._id.toString() }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
     await Session.deleteOne({ userId: user._id.toString() });
-    await Session.create({
+    const session = await Session.create({
       userId: user._id.toString(),
       accessToken,
       refreshToken,
@@ -54,7 +54,8 @@ const login = async (req, res, next) => {
       refreshTokenValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     });
 
-    res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true });
+    res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) });
+    res.cookie('sessionId', session._id, { httpOnly: true, secure: true, expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) });
 
     res.status(200).json({
       status: 200,
@@ -71,22 +72,38 @@ const refreshSession = async (req, res, next) => {
   const { refreshToken } = req.cookies;
 
   if (!refreshToken) {
+    console.error('No refresh token provided');
     return next(createError(401, 'No refresh token provided'));
   }
 
   try {
+    console.log('Received refreshToken:', refreshToken);
+    
+    // Проверка, что refreshToken существует и валиден
     const payload = jwt.verify(refreshToken, process.env.JWT_SECRET);
+    console.log('Payload from refreshToken:', payload);
 
+    if (!payload || !payload.id) {
+      throw new Error('Invalid token payload');
+    }
+
+    // Попытка найти сессию в базе данных
     const session = await Session.findOne({ userId: payload.id.toString(), refreshToken });
+    console.log('Found session:', session);
+
     if (!session) {
+      console.error('Session not found for given refresh token');
       return next(createError(401, 'Session not found'));
     }
 
+    // Удаление текущей сессии
     await Session.deleteOne({ userId: payload.id.toString() });
 
+    // Генерация новых токенов
     const newAccessToken = jwt.sign({ id: payload.id.toString() }, process.env.JWT_SECRET, { expiresIn: '15m' });
     const newRefreshToken = jwt.sign({ id: payload.id.toString() }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
+    // Создание новой сессии
     await Session.create({
       userId: payload.id.toString(),
       accessToken: newAccessToken,
@@ -95,15 +112,18 @@ const refreshSession = async (req, res, next) => {
       refreshTokenValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     });
 
-    res.cookie('refreshToken', newRefreshToken, { httpOnly: true, secure: true });
+    // Установка нового refreshToken в cookie
+    res.cookie('refreshToken', newRefreshToken, { httpOnly: true, secure: true, expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) });
 
+    // Ответ клиенту
     res.status(200).json({
       status: 200,
       message: 'Successfully refreshed a session!',
       data: { accessToken: newAccessToken }
     });
-  // eslint-disable-next-line no-unused-vars
   } catch (error) {
+    console.error('Error refreshing session:', error.message);
+    console.error('Stack trace:', error.stack);
     next(createError(401, 'Invalid or expired refresh token'));
   }
 };
@@ -122,6 +142,7 @@ const logout = async (req, res, next) => {
     }
 
     res.clearCookie('refreshToken');
+    res.clearCookie('sessionId');
 
     res.status(204).send();
   // eslint-disable-next-line no-unused-vars

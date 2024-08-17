@@ -43,14 +43,13 @@ const loginUser = async (email, password) => {
     throw createError(401, 'Invalid email or password');
   }
 
-  const accessToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '15m' });
-  const refreshToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+  const accessToken = jwt.sign({ id: user._id.toString() }, process.env.JWT_SECRET, { expiresIn: '15m' });
+  const refreshToken = jwt.sign({ id: user._id.toString() }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
+  await Session.deleteOne({ userId: user._id.toString() });
 
-  await Session.deleteOne({ userId: user._id });
-  
-  await Session.create({
-    userId: user._id,
+  const Session = await Session.create({
+    userId: user._id.toString(),
     accessToken,
     refreshToken,
     accessTokenValidUntil: new Date(Date.now() + 15 * 60 * 1000),
@@ -58,6 +57,39 @@ const loginUser = async (email, password) => {
   });
 
   return { accessToken, refreshToken };
+};
+
+export const findUserByEmail = (email) => User.findOne({ email });
+
+export const setupSession = async (userId) => {
+  await Session.deleteOne({ userId });
+  return await Session.create({ userId, ...createNewSession() });
+};
+
+export const createNewSession = () => {
+  const accessToken = jwt.sign({}, process.env.JWT_SECRET, { expiresIn: '15m' });
+  const refreshToken = jwt.sign({}, process.env.JWT_SECRET, { expiresIn: '30d' });
+  const accessTokenValidUntil = Date.now() + 1000 * 60 * 15;
+  const refreshTokenValidUntil = Date.now() + 1000 * 60 * 60 * 24 * 30;
+  return {
+    accessToken,
+    refreshToken,
+    accessTokenValidUntil,
+    refreshTokenValidUntil,
+  };
+};
+
+export const setupCookies = (res, session) => {
+  res.cookie('refreshToken', session.refreshToken, {
+    httpOnly: true,
+    secure: true,
+    expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+  });
+  res.cookie('sessionId', session._id, {
+    httpOnly: true,
+    secure: true,
+    expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+  });
 };
 
 module.exports = {
