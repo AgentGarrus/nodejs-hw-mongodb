@@ -11,11 +11,8 @@ const { logout } = require('../controllers/auth');
 const router = express.Router();
 
 router.post('/auth/register', validateBody(registerSchema), ctrlWrapper(register));
-
 router.post('/auth/login', validateBody(loginSchema), ctrlWrapper(login));
-
 router.post('/auth/refresh', ctrlWrapper(refreshSession));
-
 router.post('/auth/logout', ctrlWrapper(logout));
 
 module.exports = router;
