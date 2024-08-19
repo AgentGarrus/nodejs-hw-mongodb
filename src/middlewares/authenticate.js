@@ -1,4 +1,3 @@
-const jwt = require('jsonwebtoken');
 const createError = require('http-errors');
 const Session = require('../models/session');
 
@@ -12,19 +11,16 @@ const authenticate = async (req, res, next) => {
   const token = authHeader.split(' ')[1];
 
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-
     const session = await Session.findOne({
-      userId: payload.id,
       accessToken: token,
       accessTokenValidUntil: { $gt: new Date() }
     });
 
     if (!session) {
-      return next(createError(401, 'Access token expired'));
+      return next(createError(401, 'Access token expired or invalid'));
     }
 
-    req.user = { _id: payload.id };
+    req.user = { _id: session.userId };
     next();
   // eslint-disable-next-line no-unused-vars
   } catch (error) {
